@@ -1,0 +1,8 @@
+src/**/__tests__/**
+build/*
+public/*
+
+# Ignore artifacts:
+**/build/
+coverage
+

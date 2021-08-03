@@ -1,0 +1,50 @@
+name: Build
+on:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  build_and_test:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macOS-latest]
+        node: ["12", "14"]
+      fail-fast: false
+    name: node ${{ matrix.node }}/${{ matrix.platform }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+
+      - uses: actions/cache@v2
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Set yarn to version berry
+        run: yarn set version berry
+
+      - name: Install packages
+        run: yarn install --immutable
+
+      - name: Build for environments
+        run: yarn build
