@@ -29,15 +29,18 @@
     "typeorm:migrations": "typeorm migration:generate -n Migration",
     "prepare": "husky install",
     "commit": "cz",
-    "commit:signed": "cz -S"
+    "commit:signed": "cz -S",
+    "test": "snyk test"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.5",
     "@nestjs/core": "^8.0.5",
+    "@nestjs/microservices": "^8.0.5",
     "@nestjs/passport": "^8.0.0",
     "@nestjs/platform-express": "^8.0.5",
     "@nestjs/swagger": "^5.0.9",
     "@nestjs/testing": "^8.0.5",
+    "argon2": "^0.28.2",
     "body-parser": "^1.19.0",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
@@ -109,6 +112,7 @@
     "nodemon": "^2.0.12",
     "prettier": "^2.3.2",
     "pretty-quick": "^3.1.1",
+    "snyk": "^1.674.0",
     "supertest": "^6.1.4",
     "ts-jest": "^27.0.4",
     "ts-node": "^10.1.0",

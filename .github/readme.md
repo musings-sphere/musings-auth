@@ -1,12 +1,12 @@
 <div align="center">
 
-## musings-users
+## musings-auth
 
-[![CircleCI](https://circleci.com/gh/musings-sphere/musings-api/tree/develop.svg?style=svg)](https://circleci.com/gh/musings-sphere/musings-api/tree/develop)
+[![CircleCI](https://circleci.com/gh/musings-sphere/musings-auth/tree/develop.svg?style=svg)](https://circleci.com/gh/musings-sphere/musings-auth/tree/develop)
 [![Build](https://github.com/musings-sphere/musings-api/actions/workflows/build.yml/badge.svg)](https://github.com/musings-sphere/musings-api/actions/workflows/build.yml)
 [![CodeQL](https://github.com/musings-sphere/musings-api/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/musings-sphere/musings-api/actions/workflows/codeql-analysis.yml)
-[![Maintainability](https://api.codeclimate.com/v1/badges/99240d9e65963bd620bf/maintainability)](https://codeclimate.com/github/musings-sphere/musings-api/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/99240d9e65963bd620bf/test_coverage)](https://codeclimate.com/github/musings-sphere/musings-api/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/8f19b169c46c1643e10a/maintainability)](https://codeclimate.com/github/musings-sphere/musings-auth/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/8f19b169c46c1643e10a/test_coverage)](https://codeclimate.com/github/musings-sphere/musings-auth/test_coverage)
 [![Known Vulnerabilities](https://snyk.io/package/npm/snyk/badge.svg)](https://snyk.io/package/npm/snyk)
 
 </div>
