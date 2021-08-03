@@ -1,0 +1,17 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.19.0
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JS-CRYPTOJS-548472:
+    - twing > crypto-js:
+        reason: None given
+        expires: '2021-09-02T08:10:48.841Z'
+  SNYK-JS-MERGE-1040469:
+    - twing > merge:
+        reason: Check after 30 days
+        expires: '2021-09-02T08:10:48.841Z'
+  SNYK-JS-MERGE-1042987:
+    - twing > merge:
+        reason: None given
+        expires: '2021-09-02T08:10:48.841Z'
+patch: {}
