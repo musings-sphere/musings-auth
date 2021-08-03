@@ -1,0 +1,25 @@
+*.lock
+*.log
+\.build
+\.cache
+\.editorconfig
+\.env
+\.git
+\.gitignore
+\.ignore
+\.prettierignore
+\.reports
+\.yarn
+src/data
+node_modules
+public
+shared/assets/
+build
+**/build
+Dockerfile
+LICENSE
+*.sh
+
+# Ignore artifacts:
+build
+coverage

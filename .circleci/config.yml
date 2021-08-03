@@ -1,0 +1,176 @@
+defaults: &defaults
+  docker:
+    - image: cimg/node:14.17.3
+  working_directory: ~/musings
+
+# Aliases
+cmd_download_cc_test_reporter: &cmd_download_cc_test_reporter
+  run:
+    name: Install code climate test reporter
+    command: |
+      mkdir -p tmp/
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /tmp/cc-test-reporter
+      chmod +x /tmp/cc-test-reporter
+
+cmd_attach_workspace: &cmd_attach_workspace
+  attach_workspace:
+    at: ~/musings
+
+cmd_attach_cc_workspace: &cmd_attach_cc_workspace
+  attach_workspace:
+    at: tmp/
+
+persist_to_workspace: &persist_to_workspace
+  persist_to_workspace:
+    root: .
+    paths: .
+
+filters: &filters
+  filters:
+    branches:
+      only:
+        - /^(.*?(\bcircleci\b)[^$]*)$/
+        - develop
+        - main
+
+# The CircleCi Jobs Tree
+version: 2.1
+orbs:
+  node: circleci/node@4.5.1
+  snyk: snyk/snyk@0.0.8
+  nexploit: neuralegion/nexploit@2.0.2
+jobs:
+  checkout_code:
+    <<: *defaults
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: yarn-berry
+      - snyk/scan
+      - *persist_to_workspace
+
+  scan_with_nextploit:
+    <<: *defaults
+    steps:
+      #      - checkout
+      #      - run:
+      #          name: Install nextploit package
+      #          command: |
+      #            sudo npm install @neuralegion/nexploit-cli -g --unsafe-perm=true || true
+      - run:
+          name: Starting nexploit scan
+          command: >
+            echo export SCAN_ID=$(nexploit-cli scan:run --token $NEXPLOIT_TOKEN
+            --name "BC Scan from CircleCI"
+            --crawler https://brokencrystals.com/
+            --smart) >> "$BASH_ENV"
+      - run:
+          name: Get the output scan url
+          command: |
+            printf "Scan was started with ID https://nexploit.app/scans/${SCAN_ID}"
+      - run:
+          name: Waiting for issues
+          command: >
+            (nexploit-cli scan:polling
+            --interval 30s
+            --timeout 20m
+            --token $NEXPLOIT_TOKEN
+            --breakpoint medium_issue ${SCAN_ID})
+      - run:
+          name: Stop Scan
+          when: on_fail
+          command: |
+            nexploit-cli scan:stop --token $NEXPLOIT_TOKEN ${SCAN_ID}
+
+  test_and_report:
+    <<: *defaults
+    steps:
+      - *cmd_attach_workspace
+      - *cmd_download_cc_test_reporter
+      - run:
+          name: Run tests
+          no_output_timeout: 30m
+          command: |
+            # copy env vars from the ci environment
+            env >> .env
+            cat .env
+            yarn test:unit --coverage
+            /tmp/cc-test-reporter format-coverage -t lcov -o tmp/codeclimate.unittest.json coverage/unittest/lcov.info
+      - persist_to_workspace:
+          root: tmp
+          paths:
+            - codeclimate.unittest.json
+
+  build_artifacts:
+    <<: *defaults
+    steps:
+      - *cmd_attach_workspace
+      - run:
+          name: Run build
+          command: |
+            yarn run build
+      - *persist_to_workspace
+
+  upload_coverage:
+    <<: *defaults
+    steps:
+      - checkout
+      - *cmd_download_cc_test_reporter
+      - *cmd_attach_cc_workspace
+      - run:
+          name: Upload coverage results to code climate
+          command: |
+            /tmp/cc-test-reporter sum-coverage -p 1 -o /tmp/codeclimate.total.json tmp/codeclimate.*.json
+            /tmp/cc-test-reporter upload-coverage -i /tmp/codeclimate.total.json
+            sed -n -e 24p /tmp/codeclimate.total.json
+
+  build_push_image:
+    docker:
+      - image: cimg/node:14.17.3
+    steps:
+      - checkout
+      - *cmd_attach_workspace
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Build and Scan Docker image
+          command: |
+            echo 'export PATH=~$PATH:~/.local/bin' >> $BASH_ENV
+            echo 'export TAG=${CIRCLE_SHA1}' >> $BASH_ENV
+            echo 'export IMAGE_NAME=orb-snyk' >> $BASH_ENV && source $BASH_ENV
+            docker build -t $DOCKER_LOGIN/$IMAGE_NAME -t $DOCKER_LOGIN/$IMAGE_NAME:$TAG .
+      - snyk/scan:
+          fail-on-issues: true
+          monitor-on-build: true
+          docker-image-name: $DOCKER_LOGIN/$IMAGE_NAME:$TAG
+          target-file: "Dockerfile"
+          project: ${CIRCLE_PROJECT_REPONAME}/${CIRCLE_BRANCH}-app
+          organization: ${SNYK_CICD_ORGANIZATION}
+      - run:
+          name: Push Docker image to Docker Hub
+          command: |
+            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+            docker push $DOCKER_LOGIN/$IMAGE_NAME
+
+# The Workflow tree
+workflows:
+  version: 2
+  check_build_deploy:
+    jobs:
+      - checkout_code
+      #      - scan_with_nextploit
+      - test_and_report:
+          requires:
+            - checkout_code
+      - upload_coverage:
+          requires:
+            - test_and_report
+      - build_artifacts:
+          requires:
+            - checkout_code
+            - test_and_report
+          <<: *filters
+      - build_push_image:
+          requires:
+            - build_artifacts
+          <<: *filters

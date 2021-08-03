@@ -1,0 +1,4 @@
+shared:
+  - shared/**/*
+blog-service:
+  - blog-service/**/*
